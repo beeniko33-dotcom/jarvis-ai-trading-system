@@ -1,1 +1,1 @@
-cat /tmp/deploy_jarvis_v6.sh
+PLACEHOLDER
