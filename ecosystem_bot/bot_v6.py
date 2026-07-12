@@ -1,0 +1,1 @@
+cat /tmp/bot_v6.py

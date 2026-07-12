@@ -1,0 +1,1 @@
+cat /tmp/main_v6.py
