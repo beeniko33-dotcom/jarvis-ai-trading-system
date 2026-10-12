@@ -1,24 +1,20 @@
-# Jarvis AI Trading System v6.1
+# Jarvis AI Trading System
 
-Termux-deployable AI-powered forex/crypto trading bot with Telegram integration.
+**Status: sparse / experimental packaging (maturity level 0–1)**
 
-## Current Status
+Early packaging attempt, not the primary product.
 
-This repository is in an early / sparse state. It currently contains:
+## Use these instead
 
-- Basic README
-- A deploy script (`deploy_jarvis_v6.sh`)
-- Two folders: `ecosystem_bot/` and `jarvis_server/`
+| Role | Repository |
+|------|------------|
+| Main bot + status dashboard | [jarvis-trader-ecosystem](https://github.com/beeniko33-dotcom/jarvis-trader-ecosystem) |
+| Backend / risk / Docker | [jarvis-ai](https://github.com/beeniko33-dotcom/jarvis-ai) |
+| Compact RSI bot | [jarvis-trader](https://github.com/beeniko33-dotcom/jarvis-trader) |
 
-## Recommendation
+## This repo
 
-The most complete and actively maintained trading bot lives in:
+- Sparse folders / deploy script stubs
+- `frontend/index.html` landing page
 
-**→ [jarvis-trader-ecosystem](https://github.com/beeniko33-dotcom/jarvis-trader-ecosystem)**
-
-Consider consolidating functionality into that repository or clearly defining the role of this one (e.g. deployment packaging only).
-
-## Quick Notes
-
-- Add a proper `requirements.txt` and `.env.example` when expanding.
-- Keep secrets out of the repository.
+Prefer consolidating into `jarvis-trader-ecosystem` rather than expanding this in parallel.
