@@ -9,6 +9,8 @@ env/
 .env
 .env.*
 !.env.example
+.jarvis_config.json
+.jarvis_journal.json
 
 # Logs
 *.log

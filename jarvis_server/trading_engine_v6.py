@@ -1,1 +1,0 @@
-cat /tmp/trading_engine_v6.py

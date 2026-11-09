@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e11">
+  <title>Jarvis | Deriv Trading Terminal</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b0e11;--panel:#13171c;--raised:#191f26;--border:#252b33;--text:#e8edf2;--muted:#89939e;--gold:#f0b90b;--green:#0ecb81;--red:#f6465d}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button,select{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+    .shell{min-height:100vh;display:grid;grid-template-columns:215px minmax(0,1fr)}aside{position:sticky;top:0;height:100vh;padding:20px 14px;background:#101419;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:22px}.brand{font-size:16px;font-weight:800;padding:0 10px}.brand span{color:var(--gold)}nav{display:grid;gap:5px}nav a{padding:10px 12px;color:#a8b0ba;text-decoration:none;border-radius:8px}nav a:hover,nav a.active{background:var(--raised);color:var(--text)}.badge{margin-top:auto;padding:12px;border:1px solid var(--border);border-radius:9px;background:var(--panel)}.badge strong{display:block;margin-top:6px}.muted,.eyebrow{color:var(--muted);font-size:11px}.eyebrow{text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+    main{max-width:1600px;width:100%;margin:auto;padding:22px 24px 40px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:16px;flex-wrap:wrap}h1{font-size:22px;margin:4px 0}h2{font-size:15px;margin:0}.actions,.row,.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.chip,.tag{border:1px solid var(--border);background:var(--raised);padding:6px 9px;border-radius:6px;font-size:11px}.status{color:var(--muted)}.danger{color:var(--red)}.success{color:var(--green)}
+    .panel,.metric{background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:15px;min-width:0}.panel{margin-top:13px}.heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.metric{padding:13px 15px}.metric strong{display:block;font-size:19px;margin-top:7px;font-variant-numeric:tabular-nums}.grid{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:13px;align-items:start;margin-top:13px}.chart{height:245px;width:100%;display:block}.gridline{stroke:var(--border);stroke-width:1}.line{fill:none;stroke:var(--gold);stroke-width:2}.order{display:grid;gap:11px}.toggle{display:grid;grid-template-columns:1fr 1fr;gap:7px}.toggle button{background:var(--raised);color:var(--text)}.toggle .on{background:#087a51}.toggle .put.on{background:#a82d3d}
+    label{display:grid;gap:6px;color:var(--muted);font-size:11px}input,select{width:100%;padding:9px 10px;background:#0d1115;color:var(--text);border:1px solid var(--border);border-radius:7px}input[type=checkbox]{width:auto;accent-color:var(--gold)}button{padding:9px 12px;border:1px solid transparent;border-radius:7px;background:var(--gold);color:#171717;font-weight:750}.secondary{background:var(--raised);color:var(--text);border-color:var(--border)}.full{width:100%}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--border);font-size:12px}th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}tbody tr:last-child td{border-bottom:0}.positive{color:var(--green)}.negative{color:var(--red)}.message{padding:10px 12px;margin:12px 0;border-radius:7px;background:var(--raised);color:var(--muted);display:none}.message.show{display:block}.message.error{color:var(--red);border:1px solid #6c2831}.message.ok{color:var(--green);border:1px solid #18513d}.settings-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.symbols{max-height:210px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;border:1px solid var(--border);border-radius:7px}.symbols label{display:flex;align-items:center;gap:6px;min-width:0}.symbols span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.foot{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.55}
+    @media(max-width:980px){.shell{grid-template-columns:1fr}aside{position:static;height:auto;padding:12px;border-right:0;border-bottom:1px solid var(--border);gap:10px}.brand{padding:0 5px}nav{display:flex;overflow:auto}nav a{white-space:nowrap}.badge{display:none}main{padding:16px}.grid{grid-template-columns:1fr}.settings-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:620px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-grid{grid-template-columns:1fr}.chart{height:200px}main{padding:12px}.top{align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">JARVIS <span>TERMINAL</span></div>
+      <nav aria-label="Main navigation">
+        <a class="active" href="#overview">Overview</a><a href="#markets">Markets</a><a href="#contracts">Contracts</a><a href="#journal">Trade journal</a><a href="#automation">Automation</a><a href="#settings">Settings</a>
+      </nav>
+      <div class="badge"><span class="eyebrow">Provider</span><strong>Deriv Options API</strong><span class="muted" id="accountMode">Demo account · locked</span></div>
+    </aside>
+    <main id="overview">
+      <header class="top">
+        <div><div class="eyebrow">Live provider data · Deriv</div><h1>Trading terminal</h1></div>
+        <div class="actions"><span id="connection" class="status">Connecting…</span><span id="modeChip" class="chip">Trading locked</span><button class="secondary" id="refreshButton">Refresh</button></div>
+      </header>
+      <div id="feedback" class="message" role="status" aria-live="polite"></div>
+      <section class="metrics" aria-label="Account overview">
+        <article class="metric"><span class="eyebrow">Balance</span><strong id="balance">—</strong></article>
+        <article class="metric"><span class="eyebrow">Currency / account</span><strong id="currency">—</strong></article>
+        <article class="metric"><span class="eyebrow">Open contracts</span><strong id="openCount">—</strong></article>
+        <article class="metric"><span class="eyebrow">Daily loss / stop</span><strong id="dailyLoss">—</strong></article>
+      </section>
+      <section class="grid">
+        <article class="panel">
+          <div class="heading"><div><h2 id="chartTitle">Live market</h2><span class="muted" id="quoteInfo">Select a market to load live ticks</span></div><select id="instrument" aria-label="Select a market"></select></div>
+          <svg class="chart" id="chart" viewBox="0 0 760 250" role="img" aria-label="Live provider tick history"><g id="grid"></g><path id="chartPath" class="line"></path></svg>
+          <div class="row"><span id="lastPrice" class="chip">—</span><span id="marketCategory" class="chip">—</span><span class="muted">Quotes are from Deriv; unavailable data is shown as an error, never a fallback.</span></div>
+        </article>
+        <section class="panel order" aria-label="Deriv fixed-stake option order">
+          <div class="heading"><h2>Options order</h2><span class="tag">Fixed stake</span></div>
+          <div class="toggle"><button id="callButton" class="on">CALL</button><button id="putButton" class="put">PUT</button></div>
+          <label>Stake (USD, max $5)<input id="stake" type="number" min="0.01" max="5" step="0.01" value="5"></label>
+          <div class="row"><label style="flex:1">Duration<input id="duration" type="number" min="1" value="5"></label><label style="flex:1">Unit<select id="durationUnit"><option value="m">Minutes</option><option value="s">Seconds</option><option value="h">Hours</option><option value="d">Days</option></select></label></div>
+          <div class="foot">Options can lose the entire stake. Every order is capped at $5. Daily loss stop: $10. Maximum: 2 open contracts.</div>
+          <button id="placeOrder" class="full" disabled>Trading locked</button>
+        </section>
+      </section>
+      <section class="panel" id="markets">
+        <div class="heading"><div><h2>Available markets</h2><span class="muted">Only symbols returned by Deriv with CALL/PUT contract support are listed.</span></div><span class="chip" id="marketCount">0 markets</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Use</th><th>Symbol</th><th>Market</th><th>Submarket</th><th>Live quote</th><th>Quote time</th></tr></thead><tbody id="marketRows"><tr><td colspan="6">Connecting to Deriv…</td></tr></tbody></table></div>
+        <div class="row" style="margin-top:10px"><button class="secondary" id="selectAll">Select all shown</button><button class="secondary" id="saveSymbols">Save selected symbols for automation</button></div>
+      </section>
+      <section class="panel" id="contracts">
+        <div class="heading"><h2>Open contracts</h2><button class="secondary" id="refreshAccount">Refresh account</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Contract</th><th>Market</th><th>Type</th><th>Buy price</th><th>Payout</th><th>Status</th></tr></thead><tbody id="contractRows"><tr><td colspan="6">Connect a Deriv account to load positions.</td></tr></tbody></table></div>
+      </section>
+      <section class="panel" id="automation">
+        <div class="heading"><div><h2>Autobot scheduler</h2><span class="muted">Uses live ticks and buys fixed-stake Deriv options. Starts only on explicit request.</span></div><span id="schedulerStatus" class="chip">Stopped</span></div>
+        <div class="row">
+          <label>Interval (seconds)<input id="interval" type="number" min="15" value="60"></label>
+          <label>Cycles per run<input id="cycles" type="number" min="1" max="5" value="1"></label>
+          <label>Option duration<input id="botDuration" type="number" min="1" value="5"></label>
+          <label>Duration unit<select id="botDurationUnit"><option value="m">Minutes</option><option value="s">Seconds</option><option value="h">Hours</option><option value="d">Days</option></select></label>
+          <button id="startBot">Start scheduler</button><button class="secondary" id="stopBot">Stop scheduler</button><button class="secondary" id="runBot">Run once</button>
+        </div>
+        <div class="foot">The scheduler does not start after a server restart. Live automation stops on API errors or a daily loss stop. Signals are moving-average rules, not recommendations.</div>
+      </section>
+      <section class="panel" id="journal">
+        <div class="heading"><h2>Trade journal</h2><button class="secondary" id="exportJournal">Export JSON</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Time</th><th>Symbol</th><th>Signal</th><th>Stake</th><th>Contract / result</th></tr></thead><tbody id="journalRows"><tr><td colspan="5">No provider orders recorded.</td></tr></tbody></table></div>
+      </section>
+      <details class="panel" id="settings">
+        <summary>Deriv connection and risk settings</summary>
+        <div class="settings-grid" style="margin-top:14px">
+          <label>Account ID<input id="accountId" autocomplete="off"></label>
+          <label>Deriv API token<input id="apiToken" type="password" autocomplete="new-password" placeholder="Stored locally; never returned"></label>
+          <label>Deriv App ID<input id="appId" autocomplete="off"></label>
+          <label>Account type<select id="accountType"><option value="demo">Deriv demo</option><option value="real">Deriv real</option></select></label>
+          <label>Account currency<input id="accountCurrency" value="USD" readonly></label>
+          <label>Maximum stake per contract<input value="$5 hard limit" readonly></label>
+          <label>Maximum daily loss<input value="$10 hard limit" readonly></label>
+          <label>Maximum open contracts<input value="2 hard limit" readonly></label>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <label style="display:flex;align-items:center;gap:8px"><input id="allowLive" type="checkbox"> Enable real-account trading (demo is provider demo)</label>
+          <label style="display:flex;align-items:center;gap:8px"><input id="killSwitch" type="checkbox" checked> Kill switch</label>
+          <button id="saveConfig">Save Deriv settings</button><button class="secondary" id="checkAccount">Check connection</button>
+        </div>
+        <div class="foot">Create a Deriv API token with the required trade scope in Deriv yourself. Credentials are stored in the local owner-only config file. Editing account identity locks execution again. This server binds to localhost only; do not expose it to the internet or use an unsecured tunnel. A secured HTTPS/authenticated host is required for phone access.</div>
+      </details>
+      <section class="panel" id="research">
+        <div class="heading"><div><h2>Offline research</h2><span class="muted">Synthetic-data backtests are isolated research only and never feed live orders.</span></div><button class="secondary" id="backtest">Run isolated backtest</button></div>
+        <div id="backtestResult" class="muted">No backtest run.</div>
+      </section>
+      <div class="foot">Deriv product availability is determined from live active-symbol/contract data. CFDs, futures, and options are different products; this integration trades fixed-stake CALL/PUT options only. Confirm account eligibility and applicable rules directly with Deriv.</div>
+    </main>
+  </div>
+  <script>
+    const state = { markets: [], selectedSymbol: '', contractType: 'CALL', config: {}, account: null };
+    const $ = id => document.getElementById(id);
+    const money = (value, currency = 'USD') => `${Number(value || 0).toLocaleString(undefined,{style:'currency',currency,minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    function message(text, error = false) { const el=$('feedback'); el.textContent=text; el.className=`message show ${error?'error':'ok'}`; }
+    async function api(url, options = {}) {
+      const response=await fetch(url,{cache:'no-store',...options});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok) throw new Error(data.error||`Request failed (${response.status})`);
+      return data;
+    }
+    function setOrderState(type){state.contractType=type;$('callButton').classList.toggle('on',type==='CALL');$('putButton').classList.toggle('on',type==='PUT');}
+    function drawHistory(prices){
+      const svgWidth=760,svgHeight=250,pad=12,values=prices.map(Number).filter(x=>Number.isFinite(x)&&x>0);
+      if(values.length<2){$('chartPath').setAttribute('d','');return}
+      const min=Math.min(...values),max=Math.max(...values),range=max-min||max*.001||1;
+      const points=values.map((p,i)=>[pad+i*(svgWidth-2*pad)/(values.length-1),svgHeight-pad-(p-min)/range*(svgHeight-2*pad)]);
+      $('chartPath').setAttribute('d',points.map(([x,y],i)=>`${i?'L':'M'} ${x.toFixed(2)} ${y.toFixed(2)}`).join(' '));
+      $('grid').replaceChildren(...[0,1,2,3].map(i=>{const line=document.createElementNS('http://www.w3.org/2000/svg','line');const y=pad+i*(svgHeight-2*pad)/3;line.setAttribute('x1',pad);line.setAttribute('x2',svgWidth-pad);line.setAttribute('y1',y);line.setAttribute('y2',y);line.setAttribute('class','gridline');return line;}));
+      $('quoteInfo').textContent=`${values.length} live ticks`;
+    }
+    function renderMarkets(){
+      const tbody=$('marketRows');
+      $('marketCount').textContent=`${state.markets.length} markets`;
+      tbody.replaceChildren(...state.markets.map(item=>{
+        const row=document.createElement('tr');
+        const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=item.symbol;checkbox.className='symbol-check';checkbox.checked=(state.config.symbols||[]).includes(item.symbol);checkbox.setAttribute('aria-label',`Use ${item.symbol} for automation`);
+        const use=document.createElement('td');use.appendChild(checkbox);
+        const cols=[item.symbol,item.market||'—',item.submarket||'—',Number.isFinite(Number(item.price))?money(item.price):'—',item.epoch?new Date(Number(item.epoch)*1000).toLocaleTimeString():'—'];
+        row.appendChild(use);cols.forEach(v=>{const cell=document.createElement('td');cell.textContent=String(v);row.appendChild(cell)});
+        row.addEventListener('click',event=>{if(event.target!==checkbox){state.selectedSymbol=item.symbol;$('instrument').value=item.symbol;loadInstrument().catch(e=>message(e.message,true));}});
+        return row;
+      }));
+      const select=$('instrument');const current=state.selectedSymbol;
+      select.replaceChildren(...state.markets.map(item=>{const option=document.createElement('option');option.value=item.symbol;option.textContent=`${item.symbol} · ${item.display_name}`;return option}));
+      if(state.markets.some(item=>item.symbol===current))select.value=current;
+      else if(state.markets.length){state.selectedSymbol=state.markets[0].symbol;select.value=state.selectedSymbol}
+    }
+    async function loadMarkets(){
+      $('connection').textContent='Loading live provider data…';
+      const data=await api('/api/market');state.markets=data.markets||[];renderMarkets();
+      $('connection').textContent=state.markets.length?`Live quotes · ${data.quoted_count||0} / ${state.markets.length}`:'No supported live markets';
+      if(state.selectedSymbol)await loadInstrument();
+    }
+    async function loadInstrument(){
+      const symbol=state.selectedSymbol;if(!symbol)return;
+      const [quote,history]=await Promise.all([api(`/api/market/quote?symbol=${encodeURIComponent(symbol)}`),api(`/api/market/history?symbol=${encodeURIComponent(symbol)}`)]);
+      $('chartTitle').textContent=symbol;$('lastPrice').textContent=money(quote.price,state.config.currency||'USD');
+      const market=state.markets.find(item=>item.symbol===symbol);$('marketCategory').textContent=market?`${market.market} / ${market.submarket}`:'Deriv live';
+      drawHistory(history.prices||[]);
+    }
+    async function loadAccount(){
+      const configured=state.config?.account_id&&state.config?.app_id&&state.config?.token_configured;
+      if(!configured){
+        state.account=null;$('balance').textContent='Not connected';$('currency').textContent='Add Deriv credentials in Settings';$('openCount').textContent='—';$('dailyLoss').textContent='—';
+        $('contractRows').replaceChildren(Object.assign(document.createElement('tr'),{innerHTML:'<td colspan="6">Connect a Deriv account to load positions.</td>'}));
+      }else try{
+        const data=await api('/api/account');state.account=data.account;
+        const currency=state.account.currency||'USD';
+        $('balance').textContent=money(state.account.balance,currency);$('currency').textContent=`${currency} · ${state.account.login_id||state.config.account_type||'Deriv'}`;
+        const positions=state.account.positions||[];$('openCount').textContent=`${positions.length} / 2`;
+        $('dailyLoss').textContent=`${data.daily_risk.halted?'HALTED · ':''}${money(data.daily_risk.loss,currency)} / ${money(data.daily_risk.limit,currency)}`;
+        $('dailyLoss').className=data.daily_risk.halted?'negative':'';
+        $('contractRows').replaceChildren(...(positions.length?positions.map(item=>{
+          const row=document.createElement('tr');[item.contract_id,item.underlying_symbol||item.symbol,item.contract_type,item.buy_price,item.payout,item.contract_status].forEach(value=>{const cell=document.createElement('td');cell.textContent=String(value??'—');row.appendChild(cell)});return row;
+        }):[Object.assign(document.createElement('tr'),{innerHTML:'<td colspan="6">No open contracts</td>'})]));
+      }catch(error){$('balance').textContent='Not connected';$('currency').textContent='Add Deriv credentials in Settings';$('openCount').textContent='—';$('dailyLoss').textContent='—';message(error.message,true);}
+      const enabled=Boolean(state.config.allow_live_execution&&!state.config.kill_switch);
+      $('placeOrder').disabled=!enabled;$('placeOrder').textContent=enabled?'Request and buy option':'Trading locked';
+      $('modeChip').textContent=enabled?`${state.config.account_type} trading enabled`:'Trading locked';
+      $('modeChip').className=`chip ${enabled?'success':'danger'}`;
+      $('accountMode').textContent=`${state.config.account_type||'demo'} account · ${enabled?'unlocked':'locked'}`;
+    }
+    async function loadConfig(){
+      state.config=await api('/api/config');
+      $('accountId').value=state.config.account_id||'';$('appId').value=state.config.app_id||'';
+      $('accountType').value=state.config.account_type||'demo';$('accountCurrency').value=state.config.currency||'USD';
+      $('allowLive').checked=Boolean(state.config.allow_live_execution);$('killSwitch').checked=Boolean(state.config.kill_switch);
+      $('apiToken').placeholder=state.config.token_configured?'Token stored; leave blank to keep':'Stored locally; never returned';
+      $('interval').value=60;$('cycles').value=1;
+      await loadBotStatus();
+    }
+    async function loadBotStatus(){
+      const data=await api('/api/autobot/status');
+      $('schedulerStatus').textContent=data.enabled?'Running':'Stopped';
+      if(data.last_error)message(`Scheduler stopped: ${data.last_error}`,true);
+      const entries=(data.journal||[]).slice().reverse();
+      $('journalRows').replaceChildren(...(entries.length?entries.map(item=>{
+        const row=document.createElement('tr');const trade=item.trade||{};
+        [item.timestamp?new Date(item.timestamp).toLocaleString():'—',item.symbol,item.signal,item.stake?money(item.stake,item.currency||'USD'):'—',trade.contract_id||trade.status||'—'].forEach(value=>{const cell=document.createElement('td');cell.textContent=String(value??'—');row.appendChild(cell)});return row;
+      }):[Object.assign(document.createElement('tr'),{innerHTML:'<td colspan="5">No provider orders recorded.</td>'})]));
+    }
+    async function refresh(){await loadMarkets();await loadAccount();await loadBotStatus();}
+    $('callButton').addEventListener('click',()=>setOrderState('CALL'));
+    $('putButton').addEventListener('click',()=>setOrderState('PUT'));
+    $('instrument').addEventListener('change',()=>{state.selectedSymbol=$('instrument').value;loadInstrument().catch(e=>message(e.message,true));});
+    $('refreshButton').addEventListener('click',()=>refresh().catch(e=>message(e.message,true)));
+    $('refreshAccount').addEventListener('click',()=>loadAccount());
+    $('checkAccount').addEventListener('click',()=>loadAccount());
+    $('selectAll').addEventListener('click',()=>document.querySelectorAll('.symbol-check').forEach(item=>item.checked=true));
+    $('saveSymbols').addEventListener('click',async()=>{
+      const symbols=Array.from(document.querySelectorAll('.symbol-check:checked')).map(item=>item.value);
+      try{await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbols})});await loadConfig();message(`${symbols.length} allowed symbols saved`);}
+      catch(error){message(error.message,true)}
+    });
+    $('saveConfig').addEventListener('click',async()=>{
+      const data={account_id:$('accountId').value.trim(),app_id:$('appId').value.trim(),account_type:$('accountType').value,currency:'USD',allow_live_execution:$('allowLive').checked,kill_switch:$('killSwitch').checked};
+      if($('apiToken').value)data.token=$('apiToken').value;
+      try{await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});$('apiToken').value='';await loadConfig();await loadAccount();message('Settings saved. Any credential/account change locks trading; explicitly enable after verifying the connection.');}
+      catch(error){message(error.message,true)}
+    });
+    $('placeOrder').addEventListener('click',async()=>{
+      const stake=Number($('stake').value),duration=Number($('duration').value);
+      if(!state.selectedSymbol||!Number.isFinite(stake)||stake<=0||stake>5||!Number.isInteger(duration)||duration<1){message('Choose a market, stake up to $5, and valid duration.',true);return}
+      const confirmed=window.confirm(`Buy a ${state.contractType} option on ${state.selectedSymbol} for up to $${stake} stake? You can lose the full stake.`);
+      if(!confirmed)return;
+      try{const data=await api('/api/options/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol:state.selectedSymbol,contract_type:state.contractType,stake,duration,duration_unit:$('durationUnit').value})});message(`Contract opened: ${data.contract.contract_id}`);await loadAccount();await loadBotStatus();}
+      catch(error){message(error.message,true)}
+    });
+    async function botProfile(enabled){
+      const symbols=Array.from(document.querySelectorAll('.symbol-check:checked')).map(item=>item.value);
+      if(enabled&&!symbols.length){message('Select at least one supported market before starting automation.',true);return}
+      if(enabled&&!window.confirm('Start automated Deriv option purchases? Each stake is capped at $5; the daily stop is $10; at most 2 contracts are open.'))return;
+      try{
+        const data=await api('/api/autobot/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled,interval_seconds:Number($('interval').value),cycles:Number($('cycles').value),duration:Number($('botDuration').value),duration_unit:$('botDurationUnit').value,symbols})});
+        $('schedulerStatus').textContent=data.autobot.enabled?'Running':'Stopped';message(data.autobot.enabled?'Scheduler started':'Scheduler stopped');
+      }catch(error){message(error.message,true)}
+    }
+    $('startBot').addEventListener('click',()=>botProfile(true));
+    $('stopBot').addEventListener('click',()=>botProfile(false));
+    $('runBot').addEventListener('click',async()=>{if(!window.confirm('Run one live Deriv strategy cycle? This can buy options up to the configured risk limits.'))return;try{const data=await api('/api/autobot/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cycles:1})});message(`Run completed; ${data.autobot.runs[0]?.opened_contracts||0} contract(s) opened.`);await loadAccount();await loadBotStatus();}catch(error){message(error.message,true)}});
+    $('exportJournal').addEventListener('click',async()=>{try{const data=await api('/api/autobot/journal?limit=5000');const blob=new Blob([JSON.stringify(data.journal,null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='jarvis-deriv-journal.json';link.click();URL.revokeObjectURL(link.href);}catch(error){message(error.message,true)}});
+    $('backtest').addEventListener('click',async()=>{try{const data=await api('/api/backtest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cycles:60,cash:100000,symbols:['BTCUSD','ETHUSD']})});$('backtestResult').textContent=`Offline synthetic research only · ${data.backtest.return_pct}% return · ${data.backtest.trade_count} trades`; }catch(error){message(error.message,true)}});
+    (async()=>{try{await loadConfig();await refresh();}catch(error){message(error.message,true);$('connection').textContent='Provider unavailable';}})();
+    setInterval(()=>{loadMarkets().catch(e=>{$('connection').textContent='Provider unavailable';message(e.message,true)});loadAccount();loadBotStatus().catch(e=>message(e.message,true));},30000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "include": [
+    "jarvis_server",
+    "ecosystem_bot",
+    "tests"
+  ],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "jarvis_server"
+      ]
+    }
+  ]
+}
