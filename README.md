@@ -17,16 +17,51 @@ python -m pip install -r requirements.txt
 ./deploy_jarvis_v6.sh
 ```
 
-By default the terminal listens on `http://127.0.0.1:8000`. It intentionally binds
-to loopback only. Do not expose this unauthenticated local server through a public
-address, port-forward, or unsecured tunnel. Phone access requires a separately
-configured HTTPS deployment with authentication and appropriate secret management;
-this repository does not deploy or provision that infrastructure.
+By default the terminal listens on `http://127.0.0.1:8000` and binds to loopback
+only. Do not expose that local server directly. For a public phone-accessible
+deployment, use the HTTPS and authentication setup below.
 
 Enter credentials in Settings in the local terminal. Credentials are stored in the
 ignored `.jarvis_config.json` file with owner-only permissions on POSIX systems and
 are never returned by configuration APIs. Never paste an API token in chat or commit
 it to source control.
+
+## Public HTTPS deployment (Docker Compose)
+
+This provider-neutral setup uses Caddy for automatic HTTPS and browser HTTP Basic
+Authentication for an additional app-level password. The app container is not
+published to the host; only Caddy's HTTP/HTTPS ports are exposed. A persistent
+Docker volume stores configuration, Deriv credentials, and the journal.
+
+Requirements: a Linux host with Docker Compose, a domain name whose DNS `A`/`AAAA`
+records point to that host, and inbound TCP ports 80 and 443 allowed by its firewall.
+Do not use a Codespaces public port or expose port 8000 directly.
+
+```bash
+cp .env.example .env
+chmod 600 .env
+```
+
+Edit `.env`: set `JARVIS_DOMAIN` to your domain, choose a username, and set a unique
+strong password. Generate one with `openssl rand -hex 32`. Keep the `.env` file
+private; never commit or share it.
+
+```bash
+docker compose up -d --build
+docker compose ps
+docker compose logs caddy
+```
+
+After Caddy obtains the HTTPS certificate, open `https://your-domain/` on the phone
+and enter the app username and password when prompted. Then enter Deriv credentials
+in the terminal's Settings page; they are stored in the persistent `/data` volume.
+Keep the account in demo mode and execution locked until you have verified the
+deployment and account. The application does not enable automation at startup.
+
+Back up the `jarvis_data` Docker volume securely; it contains Deriv credentials.
+Do not expose Docker's app port, remove the Basic Auth environment settings, or
+terminate TLS outside a trusted HTTPS proxy. Deploying this setup requires your own
+domain and host; this repository does not provision either.
 
 ## Trading behavior and safeguards
 

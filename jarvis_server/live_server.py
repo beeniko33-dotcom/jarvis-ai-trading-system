@@ -4,8 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
+import hmac
 import json
 import math
+import os
 import threading
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -268,6 +272,10 @@ class JarvisHTTPServer(ThreadingHTTPServer):
     journal: JournalStore
     execution_lock: threading.Lock
     autobot: AutobotScheduler
+    require_auth = False
+    require_https_origin = False
+    auth_username = ""
+    auth_password = ""
 
 
 class JarvisHandler(BaseHTTPRequestHandler):
@@ -278,7 +286,49 @@ class JarvisHandler(BaseHTTPRequestHandler):
     def app_server(self) -> JarvisHTTPServer:
         return cast(JarvisHTTPServer, self.server)
 
+    def _authorized(self) -> bool:
+        if not self.app_server.require_auth:
+            return True
+        header = self.headers.get("Authorization", "")
+        try:
+            scheme, encoded = header.split(" ", 1)
+            if scheme.lower() != "basic":
+                raise ValueError("unsupported authorization scheme")
+            username, password = base64.b64decode(encoded, validate=True).decode("utf-8").split(":", 1)
+        except (ValueError, UnicodeDecodeError, binascii.Error):
+            username, password = "", ""
+        valid_username = hmac.compare_digest(username.encode(), self.app_server.auth_username.encode())
+        valid_password = hmac.compare_digest(password.encode(), self.app_server.auth_password.encode())
+        return valid_username and valid_password
+
+    def _https_origin_allowed(self) -> bool:
+        if not self.app_server.require_https_origin:
+            return True
+        origin = self.headers.get("Origin", "")
+        parsed_origin = urlsplit(origin)
+        request_host = self.headers.get("Host", "").lower()
+        fetch_site = self.headers.get("Sec-Fetch-Site", "").lower()
+        return (
+            parsed_origin.scheme == "https"
+            and parsed_origin.netloc.lower() == request_host
+            and fetch_site != "cross-site"
+        )
+
+    def _reject_request(self, status: int, message: str, *, authenticate: bool = False) -> None:
+        body = json.dumps({"ok": False, "error": message}).encode("utf-8")
+        self.send_response(status)
+        if authenticate:
+            self.send_header("WWW-Authenticate", 'Basic realm="Jarvis Trading Terminal", charset="UTF-8"')
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self) -> None:  # noqa: N802
+        if not self._authorized():
+            self._reject_request(401, "Authentication required", authenticate=True)
+            return
         route = urlsplit(self.path).path
         if route in {"/", "/index.html"}:
             self._serve_file(FRONTEND_DIR / "terminal.html")
@@ -293,6 +343,12 @@ class JarvisHandler(BaseHTTPRequestHandler):
         self.send_error(404, "Not found")
 
     def do_POST(self) -> None:  # noqa: N802
+        if not self._authorized():
+            self._reject_request(401, "Authentication required", authenticate=True)
+            return
+        if not self._https_origin_allowed():
+            self._reject_request(403, "POST requests must come from this HTTPS site")
+            return
         route = urlsplit(self.path).path
         if route.startswith("/api/"):
             self._handle_post(route)
@@ -654,11 +710,24 @@ class JarvisHandler(BaseHTTPRequestHandler):
 
 
 def run_server(host: str = "127.0.0.1", port: int = 8000) -> None:
-    if host not in {"127.0.0.1", "localhost", "::1"}:
+    is_loopback = host in {"127.0.0.1", "localhost", "::1"}
+    username = os.environ.get("JARVIS_ACCESS_USERNAME", "")
+    password = os.environ.get("JARVIS_ACCESS_PASSWORD", "")
+    if bool(username) != bool(password):
+        raise ValueError("Set both JARVIS_ACCESS_USERNAME and JARVIS_ACCESS_PASSWORD")
+    if password and len(password) < 16:
+        raise ValueError("JARVIS_ACCESS_PASSWORD must be at least 16 characters")
+    if username and (":" in username or any(ord(char) < 32 for char in username)):
+        raise ValueError("JARVIS_ACCESS_USERNAME must not contain colons or control characters")
+    if not is_loopback and (not username or os.environ.get("JARVIS_HTTPS_PROXY") != "1"):
         raise ValueError(
-            "Live-trading server is restricted to loopback; deploy behind authenticated HTTPS before remote access"
+            "Non-loopback access requires app credentials and JARVIS_HTTPS_PROXY=1 behind a trusted HTTPS reverse proxy"
         )
     server = JarvisHTTPServer((host, port), JarvisHandler)
+    server.require_auth = bool(username)
+    server.require_https_origin = not is_loopback
+    server.auth_username = username
+    server.auth_password = password
     server.config = ConfigStore()
     server.journal = JournalStore()
     server.execution_lock = threading.Lock()

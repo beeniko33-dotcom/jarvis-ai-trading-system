@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import json
+import os
 import sys
 import tempfile
 import threading
@@ -155,6 +157,38 @@ class JournalTests(unittest.TestCase):
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), journal.entries())
 
 
+class DeploymentTests(unittest.TestCase):
+    def test_data_directory_env_keeps_config_and_journal_on_persistent_volume(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            os.environ, {"JARVIS_DATA_DIR": directory}
+        ):
+            config = ConfigStore()
+            journal = JournalStore()
+            config.load()
+            journal.append({"source": "deriv", "symbol": "frxEURUSD"})
+
+            self.assertEqual(config.path.parent, Path(directory))
+            self.assertEqual(journal.path.parent, Path(directory))
+            self.assertTrue(config.path.exists())
+            self.assertTrue(journal.path.exists())
+
+    def test_remote_bind_requires_credentials_and_https_proxy(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, "app credentials"):
+                live_server.run_server(host="0.0.0.0", port=0)
+
+        with patch.dict(
+            os.environ,
+            {
+                "JARVIS_ACCESS_USERNAME": "phone-user",
+                "JARVIS_ACCESS_PASSWORD": "long-test-password-123",
+            },
+            clear=True,
+        ):
+            with self.assertRaisesRegex(ValueError, "trusted HTTPS reverse proxy"):
+                live_server.run_server(host="0.0.0.0", port=0)
+
+
 class DerivClientTests(unittest.TestCase):
     def setUp(self) -> None:
         self.settings = {
@@ -305,6 +339,43 @@ class ApiTests(unittest.TestCase):
         with urlopen(self.base_url + "/api/health") as response:
             payload = json.loads(response.read())
         self.assertEqual(payload["provider"], "deriv")
+
+    def test_public_mode_requires_auth_and_rejects_cross_site_posts(self) -> None:
+        server = self.server
+        server.require_auth = True
+        server.require_https_origin = True
+        server.auth_username = "phone-user"
+        server.auth_password = "long-test-password-123"
+        authorization = "Basic " + base64.b64encode(
+            b"phone-user:long-test-password-123"
+        ).decode("ascii")
+        try:
+            with self.assertRaises(HTTPError) as context:
+                urlopen(self.base_url + "/api/health")
+            self.assertEqual(context.exception.code, 401)
+            context.exception.close()
+
+            request = Request(self.base_url + "/api/health", headers={"Authorization": authorization})
+            with urlopen(request) as response:
+                self.assertEqual(response.status, 200)
+
+            request = Request(
+                self.base_url + "/api/config",
+                data=b"{}",
+                headers={
+                    "Authorization": authorization,
+                    "Origin": "https://attacker.example",
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            with self.assertRaises(HTTPError) as context:
+                urlopen(request)
+            self.assertEqual(context.exception.code, 403)
+            context.exception.close()
+        finally:
+            server.require_auth = False
+            server.require_https_origin = False
 
     def test_account_without_credentials_returns_client_error(self) -> None:
         with self.assertRaises(HTTPError) as context:

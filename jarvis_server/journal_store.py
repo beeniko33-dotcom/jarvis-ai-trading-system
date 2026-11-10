@@ -15,7 +15,9 @@ class JournalStore:
 
     def __init__(self, path: str | None = None) -> None:
         repo_root = Path(__file__).resolve().parents[1]
-        self.path = Path(path) if path else repo_root / ".jarvis_journal.json"
+        data_dir = os.environ.get("JARVIS_DATA_DIR")
+        default_path = Path(data_dir) / ".jarvis_journal.json" if data_dir else repo_root / ".jarvis_journal.json"
+        self.path = Path(path) if path else default_path
         self._lock = threading.Lock()
         self._entries = self._read()
 

@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+!.env.example
+.jarvis_config.json
+.jarvis_journal.json
+__pycache__
+*.py[cod]
+.venv
+venv
+tests

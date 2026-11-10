@@ -27,7 +27,9 @@ class ConfigStore:
     def __init__(self, path: str | None = None) -> None:
         self._lock = RLock()
         repo_root = Path(__file__).resolve().parents[1]
-        self.path = Path(path) if path else repo_root / ".jarvis_config.json"
+        data_dir = os.environ.get("JARVIS_DATA_DIR")
+        default_path = Path(data_dir) / ".jarvis_config.json" if data_dir else repo_root / ".jarvis_config.json"
+        self.path = Path(path) if path else default_path
         self.default = {
             "provider": "deriv",
             "deriv_account_id": "",
