@@ -11,6 +11,7 @@ env/
 !.env.example
 .jarvis_config.json
 .jarvis_journal.json
+.jarvis_mcp_token
 
 # Logs
 *.log

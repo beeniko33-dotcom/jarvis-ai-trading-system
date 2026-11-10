@@ -63,6 +63,49 @@ Do not expose Docker's app port, remove the Basic Auth environment settings, or
 terminate TLS outside a trusted HTTPS proxy. Deploying this setup requires your own
 domain and host; this repository does not provision either.
 
+## Temporary remote MCP endpoint
+
+For prototype use, the MCP server can be exposed through a temporary Cloudflare
+Quick Tunnel URL without buying a domain or provisioning a VPS. The URL changes
+when restarted and works only while this computer and the launcher remain running.
+Install `cloudflared` or Docker. The launcher creates a private bearer token in
+`.jarvis_mcp_token` the first time if no token is configured. Alternatively,
+configure the `.env` file:
+
+```bash
+cp .env.example .env
+chmod 600 .env
+openssl rand -hex 32
+```
+
+Put the generated value in `JARVIS_MCP_BEARER_TOKEN` in `.env`, replace the sample
+access password, and start the endpoint. If using the generated token file, read
+it locally with `cat .jarvis_mcp_token` when configuring the MCP client; do not
+paste the token into chat or commit it.
+
+```bash
+bash ./deploy_jarvis_mcp.sh
+```
+
+The terminal prints a temporary HTTPS hostname. Configure an MCP client with
+`https://<temporary-hostname>/mcp` and the bearer token from `.env`. This is a
+standard Streamable HTTP MCP endpoint; support for custom remote MCP servers varies
+between Grok products and API clients. If the Grok interface you use does not offer
+custom MCP connections, use an MCP-capable client or an xAI API integration that
+supports remote MCP.
+
+The server exposes read-only tools by default. To expose one-shot orders and
+scheduler controls, set `JARVIS_MCP_ENABLE_TRADING=true` in `.env` before launch.
+Order placement, one-shot bot runs, and scheduler start require an explicit
+`confirm=true`; Jarvis's existing execution lock, allowlist, stake cap, daily loss
+limit, and open-contract limit still apply. The model cannot unlock execution or
+change account credentials through MCP. Scheduler start can repeatedly place trades
+while enabled, so keep trading tools disabled until the endpoint and account are
+verified. Never share the bearer token or commit `.env`.
+
+The web terminal remains at `http://127.0.0.1:8000`; only the MCP service on port
+8001 is published by the tunnel.
+
 ## Trading behavior and safeguards
 
 - Provider instruments are discovered from Deriv's active-symbol API; the app asks
