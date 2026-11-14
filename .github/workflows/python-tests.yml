@@ -1,0 +1,27 @@
+name: Python safety and regression tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install runtime dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run unit and safety-invariant tests
+        run: python -m unittest discover -s tests -v
+      - name: Compile server and tests
+        run: python -m py_compile jarvis_server/*.py tests/*.py
